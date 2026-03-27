@@ -9,12 +9,14 @@ const VIEW_H = 1280;
 const DEMO_WALK = 'Walk';
 const DEMO_JUMP = 'Jump';
 
+// Phaser.Scene must be the base scene creation platform.
+// Presumable all other scenes must extend Phaser.Scene as seen here.
 class HelloScene extends Phaser.Scene {
   constructor() {
     super({ key: 'HelloScene' });
     this.hero = null;
-    this.walkSpeed = 200;
-    this.direction = 1;
+    this.walkSpeed = 200; // Initial speed in pixels(?) per second.
+    this.direction = 1; // Initial direction 1 pixel(?) to the right.
   }
 
   preload() {
@@ -48,7 +50,8 @@ class HelloScene extends Phaser.Scene {
     this.hero.animationState.setAnimation(0, DEMO_WALK, true);
     this.hero.skeleton.scaleX = Math.abs(this.hero.skeleton.scaleX);
 
-    this.input.keyboard?.on('keydown-SPACE', () => {
+    // Detects when the space key pressed to trigger jump.
+    this.input.keyboard?.on('keydown-SPACE', () => { 
       this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
       this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
     });
@@ -61,13 +64,14 @@ class HelloScene extends Phaser.Scene {
       .setOrigin(0.5, 1);
   }
 
-  update(_, deltaMs) {
-    if (!this.hero) return;
+  update(_, deltaMs) { // Runs every "tick"/frame?
+    if (!this.hero) return; // Updates only run on the hero.
     const dt = deltaMs / 1000;
     const w = this.scale.width;
     this.hero.x += this.walkSpeed * this.direction * dt;
 
-    const margin = 72;
+    // Detects if hero is on the edge of the screen, and flips the direction if so.
+    const margin = 72; // A constant number of pixels(?)
     if (this.hero.x > w - margin) {
       this.hero.x = w - margin;
       this.direction = -1;
@@ -86,7 +90,7 @@ const config = {
   width: VIEW_W,
   height: VIEW_H,
   backgroundColor: '#2d2d44',
-  scene: [HelloScene],
+  scene: [HelloScene], // Similar to a level?
   plugins: {
     scene: [{ key: 'SpinePlugin', plugin: SpinePlugin, mapping: 'spine' }]
   },
@@ -96,4 +100,5 @@ const config = {
   }
 };
 
+// Officially creates the game object that runs in browser.
 new Phaser.Game(config);
