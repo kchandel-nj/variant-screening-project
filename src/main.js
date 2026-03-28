@@ -8,6 +8,11 @@ const VIEW_H = 1280;
 // Ground constant
 const GROUND_Y = VIEW_H * 0.78;
 
+// Bullet constants
+const OBJECT_SPEED = 300;
+const OBJECT_MIN_DELAY = 1000; // ms
+const OBJECT_MAX_DELAY = 3000; // ms
+
 /** Shared Variant man rig — see public/spine/man/animations.json & ANIMATIONS.md */
 const DEMO_WALK = 'Walk';
 const DEMO_JUMP = 'Jump';
@@ -32,6 +37,13 @@ class HelloScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    const gfx = this.make.graphics({ x: 0, y: 0, add: false });
+    gfx.fillStyle(0xff4444);
+    gfx.fillRect(0, 0, 80, 80);
+    gfx.generateTexture('obstacle', 80, 80);
+    console.log('texture created', this.textures.exists('obstacle'));
+    gfx.destroy();
+
     this.add
       .text(width / 2, 20, 'Hello world — shared man Spine walks (public/spine/man/)', {
         fontSize: '14px',
@@ -52,6 +64,9 @@ class HelloScene extends Phaser.Scene {
       this.ground = this.add.rectangle(VIEW_W / 2, GROUND_Y, VIEW_W, 20);
       this.ground.setVisible(false);
       this.physics.add.existing(this.ground, true);
+
+    // Physics group
+    this.obstacles = this.physics.add.group();
 
     this.hero = this.add.spine(width * 0.2, GROUND_Y - 50, 'man', 'manAtlas');
 
@@ -97,6 +112,8 @@ class HelloScene extends Phaser.Scene {
       this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
     });*/
 
+    this.spawnObstacle();
+
     this.add
       .text(width / 2, height - 36, 'Animations: public/spine/man/animations.json & ANIMATIONS.md', {
         fontSize: '16px',
@@ -126,6 +143,27 @@ class HelloScene extends Phaser.Scene {
       this.hero.body.setSize(180, 1000);
       this.hero.body.setOffset(40, 0);
     }
+
+    // Delete bullets that go off screen.
+    this.obstacles.getChildren().forEach(obj => {
+      if (obj.x < -200 || obj.x > VIEW_W + 200) {
+      obj.destroy();
+      }
+    });
+  }
+
+  spawnObstacle() {
+    const fromLeft = Phaser.Math.Between(0, 1) === 0;
+    const x = fromLeft ? -50 : VIEW_W + 50;
+    const velocityX = fromLeft ? OBJECT_SPEED : -OBJECT_SPEED;
+
+    const obj = this.obstacles.create(x, GROUND_Y, 'obstacle');
+    obj.setDepth(100);
+    obj.body.setAllowGravity(false);
+    obj.body.setVelocityX(velocityX);
+
+    const delay = Phaser.Math.Between(OBJECT_MIN_DELAY, OBJECT_MAX_DELAY);
+    this.time.delayedCall(delay, () => this.spawnObstacle());
   }
 }
 
