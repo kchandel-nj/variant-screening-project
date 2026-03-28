@@ -15,8 +15,10 @@ class HelloScene extends Phaser.Scene {
   constructor() {
     super({ key: 'HelloScene' });
     this.hero = null;
-    this.walkSpeed = 200; // Initial speed in pixels(?) per second.
-    this.direction = 1; // Initial direction 1 pixel(?) to the right.
+    this.walkSpeed = 200; // Initial speed in pixels(?) per second: 200.
+    // Obviously changing speed makes them faster or slower.
+    // Don't make it negative.
+    this.direction = 1; // Initial direction vector, + for right - for left.
   }
 
   preload() {
@@ -45,13 +47,23 @@ class HelloScene extends Phaser.Scene {
 
     this.hero = this.add.spine(width * 0.2, height * 0.72, 'man', 'manAtlas');
     this.hero.setDepth(10);
-    this.hero.setScale(0.28);
+    this.hero.setScale(0.14); // Set relative size of the character? Initial: 0.28
     this.hero.animationState.data.defaultMix = 0.15;
     this.hero.animationState.setAnimation(0, DEMO_WALK, true);
     this.hero.skeleton.scaleX = Math.abs(this.hero.skeleton.scaleX);
 
     // Detects when the space key pressed to trigger jump.
     this.input.keyboard?.on('keydown-SPACE', () => { 
+      this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
+      this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
+    });
+
+    /*
+    First actual addition I make:
+    Make the character also jump on a mouse click.
+    Copying the old jump code and looking up how to detect mouse clicks.
+    */
+   this.input.on('pointerdown', () => { 
       this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
       this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
     });
@@ -71,7 +83,7 @@ class HelloScene extends Phaser.Scene {
     this.hero.x += this.walkSpeed * this.direction * dt;
 
     // Detects if hero is on the edge of the screen, and flips the direction if so.
-    const margin = 72; // A constant number of pixels(?)
+    const margin = 36; // A constant number of pixels(?) Initial: 72
     if (this.hero.x > w - margin) {
       this.hero.x = w - margin;
       this.direction = -1;
