@@ -9,7 +9,7 @@ const VIEW_H = 1280;
 const GROUND_Y = VIEW_H * 0.78;
 
 // Bullet constants
-const OBJECT_SPEED = 300;
+const OBJECT_SPEED = 400;
 const OBJECT_MIN_DELAY = 3000; // ms
 const OBJECT_MAX_DELAY = 5000; // ms
 
@@ -176,6 +176,7 @@ class HelloScene extends Phaser.Scene {
   onHit(hero, obstacle) {
     obstacle.destroy();
     score--;
+    this.scoreText.setText('Score: ' + score);
   }
 }
 
@@ -196,8 +197,8 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: {y: 300},
-      debug: true
+      gravity: {y: 400},
+      debug: false
     }
   }
 };
