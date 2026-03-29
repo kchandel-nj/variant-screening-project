@@ -10,12 +10,15 @@ const GROUND_Y = VIEW_H * 0.78;
 
 // Bullet constants
 const OBJECT_SPEED = 300;
-const OBJECT_MIN_DELAY = 1000; // ms
-const OBJECT_MAX_DELAY = 3000; // ms
+const OBJECT_MIN_DELAY = 3000; // ms
+const OBJECT_MAX_DELAY = 5000; // ms
 
 /** Shared Variant man rig — see public/spine/man/animations.json & ANIMATIONS.md */
 const DEMO_WALK = 'Walk';
 const DEMO_JUMP = 'Jump';
+
+// Score tracker
+let score = 0;
 
 // Phaser.Scene must be the base scene creation platform.
 // Presumable all other scenes must extend Phaser.Scene as seen here.
@@ -41,7 +44,6 @@ class HelloScene extends Phaser.Scene {
     gfx.fillStyle(0xff4444);
     gfx.fillRect(0, 0, 80, 80);
     gfx.generateTexture('obstacle', 80, 80);
-    console.log('texture created', this.textures.exists('obstacle'));
     gfx.destroy();
 
     this.add
@@ -59,6 +61,14 @@ class HelloScene extends Phaser.Scene {
         fontFamily: 'system-ui, sans-serif'
       })
       .setOrigin(0.5, 0);
+    
+    this.scoreText = this.add
+      .text(width / 2, 64, 'Score: ' + score, {
+        fontSize: '20px',
+        color: '#e8e8e8',
+        fontFamily: 'system-ui, sans-serif'
+      })
+      .setOrigin(0.5, 0);
 
       // Create a ground
       this.ground = this.add.rectangle(VIEW_W / 2, GROUND_Y, VIEW_W, 20);
@@ -69,6 +79,9 @@ class HelloScene extends Phaser.Scene {
     this.obstacles = this.physics.add.group();
 
     this.hero = this.add.spine(width * 0.2, GROUND_Y - 50, 'man', 'manAtlas');
+
+    // Collision detection
+    this.physics.add.overlap(this.hero, this.obstacles, this.onHit, null, this);
 
     // Adding physics to the hero.
     this.physics.add.existing(this.hero);
@@ -85,32 +98,18 @@ class HelloScene extends Phaser.Scene {
 
     // Creating an actual physics jump.
     const doJump = () => {
-      //this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
-      //this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
+      if (this.hero.body.blocked.down){
+      this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
+      this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
       this.hero.body.setVelocityY(-250);
+    }
       // Since up is negative, and gravity already exists, I just need to set the velocity and done.
     }
 
     // Detects when the space key pressed to trigger jump.
     this.input.keyboard?.on('keydown-SPACE', doJump);
-    /*this.input.keyboard?.on('keydown-SPACE', () => { 
-      // Set animation forces the jump.
-      this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
-      // Add animation waits for jump animation to finish before starting the walk again.
-      this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
-    });*/
 
     this.input.on('pointerdown', doJump);
-
-    /*
-    First actual addition I make:
-    Make the character also jump on a mouse click.
-    Copying the old jump code and looking up how to detect mouse clicks.
-    */
-   /*this.input.on('pointerdown', () => { 
-      this.hero.animationState.setAnimation(0, DEMO_JUMP, false);
-      this.hero.animationState.addAnimation(0, DEMO_WALK, true, 0);
-    });*/
 
     this.spawnObstacle();
 
@@ -148,22 +147,35 @@ class HelloScene extends Phaser.Scene {
     this.obstacles.getChildren().forEach(obj => {
       if (obj.x < -200 || obj.x > VIEW_W + 200) {
       obj.destroy();
+      // Increment score if object is destroyed off screen.
+      score++;
+      this.scoreText.setText('Score: ' + score);
+      console.log(score);
       }
     });
   }
 
   spawnObstacle() {
+    // Choose between spawning from left or right
     const fromLeft = Phaser.Math.Between(0, 1) === 0;
     const x = fromLeft ? -50 : VIEW_W + 50;
     const velocityX = fromLeft ? OBJECT_SPEED : -OBJECT_SPEED;
 
+    // Spawn object
     const obj = this.obstacles.create(x, GROUND_Y, 'obstacle');
     obj.setDepth(100);
     obj.body.setAllowGravity(false);
     obj.body.setVelocityX(velocityX);
 
+    // Spawn the next object
     const delay = Phaser.Math.Between(OBJECT_MIN_DELAY, OBJECT_MAX_DELAY);
     this.time.delayedCall(delay, () => this.spawnObstacle());
+  }
+
+  // What happens when bullet collides with hero?
+  onHit(hero, obstacle) {
+    obstacle.destroy();
+    score--;
   }
 }
 
