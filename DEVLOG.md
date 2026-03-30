@@ -18,10 +18,13 @@ As of this commit, the jump actually changes the hitbox height, but does not pla
     Now obsolete, animation plays.
 I set up a "ground" so the jump has something to land on and physics acts on the hero.
 It also can repeatedly jump without hitting the ground, which needs to be fixed.
+    This has been fixed by checking if the player is on the ground or not.
 
 I have created "bullets" that come from either side of the screen and can hit the player.
     If the player successfully dodges a bullet, the score goes up.
     If the player gets hit by a bullet, the score goes down.
+
+    I thought this would fare as a very intuitive and simple to set up gameplay loop.
 
 # Challenges
 I came across a bug where the "bullets" didn't render, but were spawned.
